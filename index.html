@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Structural Integrity Monitor - AR Visual Prototype</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+    </style>
+</head>
+
+<body style="margin: 0; overflow: hidden;">
+    <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960;">
+
+        <a-marker preset="hiro">
+            <a-image src="bridge.png" position="0 0 0" rotation="-90 0 0" width="1" height="1"></a-image>
+            <a-entity line="start: -0.5 0.3 -0.3; end: 0.5 -0.5 0; color: red;"></a-entity>
+        </a-marker>
+        <a-entity camera></a-entity>
+    </a-scene>
+</body>
+
+<script>
+
+    function getSensorInfo(markerId) {
+        // MOCK DATA
+        var sensorInfo = {}
+        sensorInfo.id = Math.floor(Math.random() * 100000);
+        sensorInfo.name = "Sensor " + sensorInfo.id;
+
+        var possibleTypes = ["Tension", "Temperature"]
+        sensorInfo.type = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
+
+        sensorInfo.value = 0;
+        if (sensorInfo.type == "Tension") {
+            sensorInfo.value = Math.floor(Math.random() * 1000);
+            sensorInfo.unit = "N";
+            if (sensorInfo.value < 300) {
+                sensorInfo.status = "OK";
+            } else if (sensorInfo.value < 750) {
+                sensorInfo.status = "WARNING";
+            } else {
+                sensorInfo.status = "DANGER";
+            }
+        } else if (sensorInfo.type == "Temperature") {
+            sensorInfo.value = Math.floor(5 + Math.random() * 50);
+            sensorInfo.unit = "°C";
+            if (sensorInfo.value < 20) {
+                sensorInfo.status = "OK";
+            } else if (sensorInfo.value < 40) {
+                sensorInfo.status = "WARNING";
+            } else {
+                sensorInfo.status = "DANGER";
+            }
+        }.
+
+        //Returning a random sensor info
+        return sensorInfo;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const marker = document.querySelector('a-marker');
+
+        marker.addEventListener('markerFound', () => {
+            console.log('markerFound');
+            // GETTING MARKER INFO
+            var markerId = 12345; //MOCK DATA
+
+            var sensorInfo = getSensorInfo(markerId);
+
+            // First we draw the 
+        });
+    });
+
+</script>
+
+</html>
