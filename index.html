@@ -10,14 +10,12 @@
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-    <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;" embedded
+    <a-scene vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: false;" embedded
         arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960;">
 
         <a-marker preset="hiro">
-            <a-image src="bridge.png" position="0 0 0" rotation="-90 0 0" width="1" height="1"></a-image>
-            <a-entity line="start: -0.5 0.3 -0.3; end: 0.5 -0.5 0; color: red;"></a-entity>
         </a-marker>
-        <a-entity camera></a-entity>
+        <a-entity camera id="camera"></a-entity>
     </a-scene>
 </body>
 
@@ -53,10 +51,91 @@
             } else {
                 sensorInfo.status = "DANGER";
             }
-        }.
+        };
 
         //Returning a random sensor info
         return sensorInfo;
+    }
+
+    function createNewLineElement(parent, start, end, color) {
+        var line = document.createElement('a-entity');
+        line.setAttribute('line', {
+            start: start,
+            end: end,
+            color: color,
+        });
+
+        line.setAttribute("rotation", "0 0 0")
+
+        // console.log(start + " " + end)
+        parent.appendChild(line);
+    }
+
+    function offsetStringVector(strVec, offset) {
+        var strVecArray = strVec.split(" ");
+        var x = parseFloat(strVecArray[0]) + offset[0];
+        var y = parseFloat(strVecArray[1]) + offset[1];
+        var z = parseFloat(strVecArray[2]) + offset[2];
+        return x + " " + y + " " + z;
+    }
+
+    function getMiddleOfTwoStringVectors(strVec1, strVec2) {
+        var strVecArray1 = strVec1.split(" ");
+        var strVecArray2 = strVec2.split(" ");
+        var x = (parseFloat(strVecArray1[0]) + parseFloat(strVecArray2[0])) / 2;
+        var y = (parseFloat(strVecArray1[1]) + parseFloat(strVecArray2[1])) / 2;
+        var z = (parseFloat(strVecArray1[2]) + parseFloat(strVecArray2[2])) / 2;
+        return x + " " + y + " " + z;
+    }
+
+
+    function drawNewSensorInfo(parent, start, end, sensorId) {
+        //We grab the marker 
+        var sensorInfo = getSensorInfo(sensorId); //MOCK DATA
+
+        var color = "green";
+        if (sensorInfo.status == "WARNING") {
+            color = "yellow";
+        } else if (sensorInfo.status == "DANGER") {
+            color = "red";
+        }
+
+        //We draw multiple line entities to simulate a "thick" line
+        createNewLineElement(parent, start, end, color);
+        for (var x1 = -1; x1 <= 1; x1++) {
+            for (var y1 = -1; y1 <= 1; y1++) {
+                for (var z1 = -1; z1 <= 1; z1++) {
+                    var offset = [x1 * 0.0005, y1 * 0.0005, z1 * 0.0005];
+                    createNewLineElement(parent, offsetStringVector(start, offset), offsetStringVector(end, offset), color);
+                }
+            }
+        }
+
+        // We add text in the middle of the line
+        // <a-text value="Hello, world!" font="fonts/Exo2Bold.fnt" color="black" rotation="-90 0 0" align="center" scale="2 2 2" position="0.01 -0.2 0"></a-text>
+
+        var text = document.createElement('a-text');
+        text.setAttribute('value', sensorInfo.name + "(" +  sensorInfo.type + ": " + sensorInfo.value + " " + sensorInfo.unit + ") -> " + sensorInfo.status);
+        // text.setAttribute('font', "fonts/Exo2Bold.fnt");
+        text.setAttribute('color', color);
+        text.setAttribute('position', offsetStringVector(getMiddleOfTwoStringVectors(start, end), [0.01, 0.03, 0.01]));
+        text.setAttribute('scale', "0.06 0.06 0.06");
+        text.setAttribute('align', "center");
+
+        //We calculate the rotation based on the line
+        var rotation = [0, 0, 0];
+        // var startArray = start.split(" ");
+        // var endArray = end.split(" ");
+        // var x = parseFloat(endArray[0]) - parseFloat(startArray[0]);
+        // var y = parseFloat(endArray[1]) - parseFloat(startArray[1]);
+        // var z = parseFloat(endArray[2]) - parseFloat(startArray[2]);
+        // rotation[0] = Math.floor(Math.atan2(y, Math.sqrt(x * x + y * y)) * 180 / Math.PI);
+        // rotation[1] = 0;
+        // rotation[2] = Math.floor(Math.atan2(x, y) * 180 / Math.PI);
+
+        text.setAttribute('rotation', rotation[0] + " " + rotation[1] + " " + rotation[2]);
+
+        parent.appendChild(text);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -64,14 +143,82 @@
 
         marker.addEventListener('markerFound', () => {
             console.log('markerFound');
-            // GETTING MARKER INFO
-            var markerId = 12345; //MOCK DATA
+            //Remove all the previous sensor info
+            while (marker.firstChild) {
+                marker.removeChild(marker.firstChild);
+            }
 
-            var sensorInfo = getSensorInfo(markerId);
+            // We add the image
+            // <a-image src="https://magxm.github.io/StructuralIntegrityMonitor-AR-Prototype/bridge.png" position="0 0 0" rotation="-90 0 0" width="3" height="5"></a-image>
+            var image = document.createElement('a-image');
+            image.setAttribute('src', 'https://magxm.github.io/StructuralIntegrityMonitor-AR-Prototype/bridge.png');
+            image.setAttribute('position', '0 0 0');
+            image.setAttribute('rotation', '-90 0 0');
+            // image.setAttribute('width', '3');
+            // image.setAttribute('height', '5');
+            marker.appendChild(image);
 
-            // First we draw the 
+
+            // We add the sensor datas
+            //Horizontal sensor lines
+            drawNewSensorInfo(marker, "-0.10 0.29 0.05", "0.29 0.29 0.05", 12345)
+            drawNewSensorInfo(marker, "-0.10 0.24 0.05", "0.28 0.24 0.05", 12345)
+            drawNewSensorInfo(marker, "-0.07 0.17 0.05", "0.23 0.17 0.05", 12345)
+            drawNewSensorInfo(marker, "-0.07 0.1 0.05", "0.17 0.1 0.05", 12345)
+            drawNewSensorInfo(marker, "-0.075 0.065 0.05", "0.14 0.065 0.05", 12345)
+            drawNewSensorInfo(marker, "-0.075 0.037 0.05", "0.11 0.037 0.05", 12345)
+
+
+            //others
+            drawNewSensorInfo(marker, "0.31 0 0", "0.5 0.4 0.54", 12345)
+            drawNewSensorInfo(marker, "0.275 0.1 0", "0.47 0.1 -0.3", 12345)
+            drawNewSensorInfo(marker, "-0.3 0 0", "-0.3 0.20 0.39", 12345)
+            drawNewSensorInfo(marker, "-0.4 0.10 0.39", "-0.3 0.10 0.39", 12345)
         });
     });
+
+    var newSensorStart = null;
+    var newSensorEnd = null;
+
+    document.addEventListener('click', function (event) {
+        var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Access the camera element
+        var cameraEl = document.getElementById('camera');
+
+        // Get the actual camera object from the camera element
+        var camera = cameraEl.getObject3D('camera');
+
+        // Check if the camera object is correctly retrieved
+        if (camera && camera.isCamera) {
+            var raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), camera);
+
+            var marker = document.querySelector('a-marker');
+            var intersects = raycaster.intersectObject(marker.object3D, true);
+
+            if (intersects.length > 0) {
+                var intersectionPoint = intersects[0].point;
+                var localPoint = marker.object3D.worldToLocal(intersectionPoint.clone());
+                console.log(localPoint); // 3D coordinates (x, y, z) relative to the marker
+
+                if (newSensorStart == null) {
+                    newSensorStart = localPoint;
+                } else if (newSensorEnd == null) {
+                    newSensorEnd = localPoint;
+                    console.log("Drawing new sensor")
+                    drawNewSensorInfo(marker, newSensorStart.x + " " + newSensorStart.y + " " + newSensorStart.z, newSensorEnd.x + " " + newSensorEnd.y + " " + newSensorEnd.z, 12345)
+                    newSensorStart = null;
+                    newSensorEnd = null;
+                }
+            }
+        } else {
+            console.error("Unable to access the camera object.");
+        }
+    });
+
+
 
 </script>
 
